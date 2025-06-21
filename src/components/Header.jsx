@@ -1,8 +1,11 @@
 import React, { useContext } from "react";
 import { ThemeContext } from "../theme/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const { isAuthenticated, logout } = useAuth();
   const [time, setTime] = React.useState(new Date());
 
   React.useEffect(() => {
@@ -28,12 +31,24 @@ const Header = () => {
         <button onClick={toggleTheme} style={{ fontSize: '1.3rem', padding: '0.3rem 0.7rem', borderRadius: '50%', background: 'var(--bg)', border: '1px solid var(--border)', transition: 'background 0.2s' }}>
           {theme === "dark" ? "🌙" : "☀️"}
         </button>
-        <button style={{ padding: '0.5rem 1.2rem', borderRadius: '2rem', background: 'var(--accent)', color: 'var(--bg)', fontWeight: 600, marginRight: '0.5rem' }}>
-          Sign In
-        </button>
-        <button style={{ padding: '0.5rem 1.2rem', borderRadius: '2rem', background: 'var(--text)', color: 'var(--bg)', fontWeight: 600 }}>
-          Register
-        </button>
+        {isAuthenticated ? (
+          <button onClick={logout} style={{ padding: '0.5rem 1.2rem', borderRadius: '2rem', background: 'var(--accent)', color: 'var(--bg)', fontWeight: 600, marginRight: '0.5rem' }}>
+            Sign Out
+          </button>
+        ) : (
+          <>
+            <Link to="/signin" style={{ textDecoration: 'none' }}>
+              <button style={{ padding: '0.5rem 1.2rem', borderRadius: '2rem', background: 'var(--accent)', color: 'var(--bg)', fontWeight: 600, marginRight: '0.5rem' }}>
+                Sign In
+              </button>
+            </Link>
+            <Link to="/signup" style={{ textDecoration: 'none' }}>
+              <button style={{ padding: '0.5rem 1.2rem', borderRadius: '2rem', background: 'var(--text)', color: 'var(--bg)', fontWeight: 600 }}>
+                Get Started
+              </button>
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );
