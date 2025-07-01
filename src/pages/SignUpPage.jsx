@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api/axios';
 import './SignUpPage.css';
 
 const SignUpPage = () => {
@@ -30,7 +30,7 @@ const SignUpPage = () => {
     }
 
     try {
-      const response = await axios.post('/api/accounts/signup/', {
+      const response = await api.post('/api/accounts/signup/', {
         username: formData.username,
         email: formData.email,
         password: formData.password,

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import './SignInPage.css';
 
@@ -23,11 +22,8 @@ const SignInPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/token/', {
-        username: formData.username,
-        password: formData.password,
-      });
-      login(response.data.access, response.data.refresh);
+      await login(formData.username, formData.password);
+      // Success: user is logged in and redirected
     } catch (err) {
       setError('Failed to sign in. Please check your credentials.');
       console.error(err);

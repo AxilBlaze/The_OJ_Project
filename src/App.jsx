@@ -15,6 +15,7 @@ import AchievementsTeaser from './components/AchievementsTeaser';
 import SearchBar from './components/SearchBar';
 import CodeSnippetRenderer from './components/CodeSnippetRenderer';
 import Footer from './components/Footer';
+import ProblemPage from './pages/ProblemPage';
 import './App.css';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/home" element={<HomePage />} />
+          <Route path="/problem/:problemId" element={<ProblemPage />} />
         </Routes>
       </AuthProvider>
     </Router>
