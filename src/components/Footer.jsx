@@ -9,7 +9,7 @@ export default function Footer() {
         <a href="#" style={{ color: 'var(--accent)', margin: '0 1rem' }}>Privacy</a>
       </div>
       <div>
-        &copy; {new Date().getFullYear()} CodeArena. All rights reserved.
+        &copy; {new Date().getFullYear()} CodeBlaze. All rights reserved.
       </div>
     </footer>
   );

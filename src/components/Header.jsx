@@ -24,7 +24,7 @@ const Header = () => {
           {time.toLocaleTimeString()} | UTC: {time.toUTCString().slice(17, 25)}
         </span>
         <span style={{ fontWeight: 700, fontSize: '1.5rem', letterSpacing: '0.03em' }}>
-          CodeArena
+          CodeBlaze
         </span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

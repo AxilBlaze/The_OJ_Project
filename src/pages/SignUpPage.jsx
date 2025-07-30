@@ -114,7 +114,7 @@ const SignUpPage = () => {
           </form>
         </div>
         <div className="benefits-container">
-          <h3>Welcome to CodeArena</h3>
+          <h3>Welcome to CodeBlaze</h3>
           <p>You'll be developer #47,832!</p>
           {/* Other benefits content */}
         </div>
