@@ -57,21 +57,23 @@ int main() {
     'Java': `import java.util.*;
 import java.io.*;
 
-public class Solution {
+public class Main {
     public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
         
-        // Read input
-        // int n = sc.nextInt();
-        // int[] arr = new int[n];
-        // for(int i = 0; i < n; i++) {
-        //     arr[i] = sc.nextInt();
+        // Read input examples:
+        // int n = scanner.nextInt();                    // Read single integer
+        // String s = scanner.nextLine();                // Read string
+        // int[] arr = new int[n];                       // Array declaration
+        // for(int i = 0; i < n; i++) {                 // Read array elements
+        //     arr[i] = scanner.nextInt();
         // }
+        // String[] words = scanner.nextLine().split(" "); // Read space-separated strings
         
         // Your solution here
         System.out.println("Hello, World!");
         
-        sc.close();
+        scanner.close();
     }
 }`
   };
@@ -112,7 +114,7 @@ public class Solution {
     const languageMap = {
       'Python': 'py',
       'C++': 'cpp',
-      'Java': 'java' // Note: Java not supported in backend yet
+      'Java': 'java'
     };
 
     const backendLanguage = languageMap[language];
@@ -165,7 +167,7 @@ public class Solution {
     const languageMap = {
       'Python': 'py',
       'C++': 'cpp',
-      'Java': 'java' // Note: Java not supported in backend yet
+      'Java': 'java'
     };
 
     const backendLanguage = languageMap[language];
@@ -273,7 +275,7 @@ public class Solution {
               >
                 <option value="Python">Python</option>
                 <option value="C++">C++</option>
-                <option value="Java" disabled>Java (Coming Soon)</option>
+                <option value="Java">Java</option>
               </select>
             </div>
             
