@@ -41,24 +41,22 @@ export default function HeroBanner() {
         fontSize: '2.7rem',
         fontWeight: 800,
         letterSpacing: '0.01em',
-        background: 'linear-gradient(90deg, #00c6ff, #0072ff, #00c6ff)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
+        color: '#007acc',
         animation: 'shine 2s linear infinite',
         zIndex: 1
       }}>
         {phrases[index]}
       </h1>
       <div style={{ display: 'flex', gap: '1.5rem', zIndex: 1 }}>
-        <button style={{ padding: '0.8rem 2.2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'linear-gradient(90deg, #0072ff, #00c6ff)', color: '#fff', fontWeight: 700, boxShadow: '0 2px 8px #0072ff22', border: 'none' }}>Start Coding</button>
-        <button style={{ padding: '0.8rem 2.2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'var(--card-bg)', color: 'var(--text)', fontWeight: 700, border: '1px solid var(--border)' }}>Browse Problems</button>
-        <button style={{ padding: '0.8rem 2.2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'var(--accent)', color: 'var(--bg)', fontWeight: 700, border: 'none' }}>Join Contest</button>
+        <button style={{ padding: '0.8rem 2.2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'linear-gradient(90deg, #ff6b35, #e55a2b)', color: '#fff', fontWeight: 700, boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)', border: 'none' }}>Start Coding</button>
+        <button style={{ padding: '0.8rem 2.2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'linear-gradient(90deg, #007acc, #005a9e)', color: '#fff', fontWeight: 700, boxShadow: '0 2px 8px rgba(0, 122, 204, 0.3)', border: 'none' }}>Browse Problems</button>
+        <button style={{ padding: '0.8rem 2.2rem', fontSize: '1.1rem', borderRadius: '2rem', background: '#ff6b35', color: '#fff', fontWeight: 700, border: 'none' }}>Join Contest</button>
       </div>
       {/* Stats bar placeholder */}
       <div style={{ display: 'flex', gap: '2.5rem', marginTop: '1.5rem', zIndex: 1 }}>
-        <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>🟢 1,234 users online</span>
-        <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>✅ 12,345 problems solved today</span>
-        <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>📨 45,678 submissions</span>
+        <span style={{ fontWeight: 600, fontSize: '1.1rem', color: '#007acc' }}>🟢 1,234 users online</span>
+        <span style={{ fontWeight: 600, fontSize: '1.1rem', color: '#ff6b35' }}>✅ 12,345 problems solved today</span>
+        <span style={{ fontWeight: 600, fontSize: '1.1rem', color: '#007acc' }}>📨 45,678 submissions</span>
       </div>
       <style>{`
         @keyframes shine {
