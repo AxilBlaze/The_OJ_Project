@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
-  // withCredentials removed for JWT usage
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000',
 });
 
 // Add a request interceptor to include JWT token

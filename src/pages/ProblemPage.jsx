@@ -84,7 +84,10 @@ public class Main {
         setProblem(res.data);
         setLoading(false);
         // Set initial code template when problem loads
-        setCode(codeTemplates['Python']);
+        const initialCode = codeTemplates['Python'];
+        setCode(initialCode);
+        // Broadcast initial code to AI assistant
+        window.dispatchEvent(new CustomEvent('oj-code-update', { detail: { code: initialCode, language: 'Python' } }));
       })
       .catch(err => {
         setLoading(false);
@@ -96,6 +99,8 @@ public class Main {
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
     setCode(codeTemplates[newLanguage]);
+    // Broadcast code+language to AI assistant
+    window.dispatchEvent(new CustomEvent('oj-code-update', { detail: { code: codeTemplates[newLanguage], language: newLanguage } }));
   };
 
   const handleRun = async () => {
@@ -126,6 +131,8 @@ public class Main {
     }
 
     try {
+      // Broadcast latest code to AI assistant before running
+      window.dispatchEvent(new CustomEvent('oj-code-update', { detail: { code, language } }));
       const response = await api.post('/submit/api/run/', {
         language: backendLanguage,
         code: code,
@@ -281,7 +288,11 @@ public class Main {
             
             <textarea
               value={code}
-              onChange={e => setCode(e.target.value)}
+              onChange={e => {
+                const updated = e.target.value;
+                setCode(updated);
+                window.dispatchEvent(new CustomEvent('oj-code-update', { detail: { code: updated, language } }));
+              }}
               rows={12}
               placeholder="Write your code here..."
               style={{ width: '100%', borderRadius: 8, border: '1px solid #444', background: '#18181b', color: '#f1f5f9', padding: '1rem', fontFamily: 'monospace', fontSize: '1rem', resize: 'vertical', minHeight: 240, marginBottom: 12 }}

@@ -21,7 +21,7 @@ class GeminiService {
   }
 
   // Generate response from Gemini API
-  async generateResponse(userMessage, conversationHistory = [], problemContext = null) {
+  async generateResponse(userMessage, conversationHistory = [], problemContext = null, userCodeContext = null) {
     if (!this.apiKey || this.apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
       // Provide basic placeholder responses when API key is not configured
       return this.getPlaceholderResponse(userMessage, problemContext);
@@ -29,7 +29,7 @@ class GeminiService {
 
     try {
       // Prepare conversation context
-      const conversationContext = this.buildConversationContext(conversationHistory, userMessage, problemContext);
+      const conversationContext = this.buildConversationContext(conversationHistory, userMessage, problemContext, userCodeContext);
       
              const response = await fetch(this.baseUrl, {
          method: 'POST',
@@ -89,31 +89,24 @@ class GeminiService {
   }
 
   // Build conversation context for better responses
-  buildConversationContext(conversationHistory, currentMessage, problemContext = null) {
-    const systemPrompt = `You are Ember, an AI coding assistant for CodeBlaze - an online coding platform. You help users with:
+  buildConversationContext(conversationHistory, currentMessage, problemContext = null, userCodeContext = null) {
+    const systemPrompt = `You are Ember, an AI coding assistant for an online coding platform.
+Your goals:
+1. Problem solving: help users understand and solve coding problems
+2. Code review: suggest improvements to user code
+3. Debugging: identify and fix bugs
+4. Learning: explain concepts and best practices
+5. Algorithm design: propose efficient approaches
 
-1. **Problem Solving**: Help users understand and solve coding problems
-2. **Code Review**: Review and suggest improvements to user code
-3. **Debugging**: Help identify and fix bugs in code
-4. **Learning**: Explain programming concepts and best practices
-5. **Algorithm Design**: Help design efficient algorithms
-6. **Language Support**: Provide help with multiple programming languages
-
-**Your Personality:**
-- Friendly and encouraging 🔥
-- Patient and thorough in explanations
-- Focus on teaching and learning
-- Provide practical, actionable advice
+Tone and style:
+- Friendly, encouraging, and patient
+- Clear, step-by-step, practical, and concise
 - Use code examples when helpful
-- Keep responses concise but informative
 
-**Response Guidelines:**
-- Always be helpful and supportive
-- Provide clear, step-by-step explanations
-- Include code examples when relevant
-- Suggest best practices and optimizations
-- Encourage learning and experimentation
-- End responses with 🔥 emoji
+Formatting rules:
+- Respond in plain text only
+- Do not use markdown formatting or asterisks for emphasis
+- Do not use bold or italics
 
 Current conversation context:`;
 
@@ -121,13 +114,25 @@ Current conversation context:`;
     
     // Add problem context if available
     if (problemContext) {
-      context += `**Current Problem Context:**\n`;
+      context += `Current Problem Context:\n`;
       context += `Title: ${problemContext.title}\n`;
-      context += `Difficulty: ${problemContext.difficulty}\n`;
+      context += `Difficulty: ${problemContext.difficulty || 'N/A'}\n`;
       context += `Description: ${problemContext.description}\n`;
       context += `Sample Input: ${problemContext.sample_input}\n`;
       context += `Sample Output: ${problemContext.sample_output}\n`;
       context += `Tags: ${problemContext.tags?.join(', ') || 'N/A'}\n\n`;
+    }
+
+    // Add user code context if available
+    if (userCodeContext && userCodeContext.code) {
+      const language = userCodeContext.language || 'plaintext';
+      // Truncate very long code to keep prompt size reasonable
+      const maxChars = 8000;
+      const codeSnippet = userCodeContext.code.length > maxChars
+        ? userCodeContext.code.slice(0, maxChars) + "\n// ... code truncated ..."
+        : userCodeContext.code;
+      context += `User's Current Code (${language}):\n`;
+      context += codeSnippet + "\n\n";
     }
     
     // Add conversation history
@@ -165,26 +170,26 @@ For now, I can help you understand the problem structure and provide general cod
     
     if (message.includes('problem') || message.includes('understand')) {
       if (problemContext) {
-        return `Let me help you understand this problem! 🔥
+        return `Let me help you understand this problem. 🔥
 
-**Problem Overview:**
-- **Title:** ${problemContext.title}
-- **Difficulty:** ${problemContext.difficulty}
-- **Tags:** ${problemContext.tags?.join(', ') || 'N/A'}
+Problem overview:
+- Title: ${problemContext.title}
+- Difficulty: ${problemContext.difficulty}
+- Tags: ${problemContext.tags?.join(', ') || 'N/A'}
 
-**Key Points:**
+Key points:
 1. Read the problem description carefully
-2. Understand the input/output format
+2. Understand the input and output format
 3. Consider edge cases
 4. Think about the most efficient approach
 
-Would you like me to help you break down the problem further once you configure the API key?`;
+Would you like me to break down the input, output, and constraints step by step?`;
       } else {
-        return `I'd love to help you understand this problem! 🔥
+        return `I can help you understand this problem. 🔥
 
-However, I need to fetch the problem details first. Once you configure your Gemini API key, I'll be able to provide detailed problem analysis and solution strategies.
+I need the problem details first. After you configure your Gemini API key, I will analyze the problem and propose an approach.
 
-For now, try reading the problem description carefully and identifying the key requirements!`;
+For now, try to summarize the inputs, outputs, and constraints in your own words.`;
       }
     }
     
@@ -202,41 +207,37 @@ Once you configure your Gemini API key, I'll be able to analyze your specific co
     }
     
     if (message.includes('algorithm') || message.includes('approach')) {
-      return `Great question about algorithms! 🔥
+      return `Great question about algorithms. 🔥
 
 General problem-solving approach:
-1. **Understand the problem** - Read carefully and identify constraints
-2. **Think of examples** - Work through sample cases
-3. **Consider different approaches** - Brute force, optimization, etc.
-4. **Choose the best solution** - Balance correctness and efficiency
-5. **Implement and test** - Write clean, readable code
-
-Once you configure your Gemini API key, I'll provide specific algorithm suggestions for this problem!`;
+1. Understand the problem and constraints
+2. Work through small examples
+3. Consider multiple approaches (brute force vs optimized)
+4. Choose a solution that balances correctness and efficiency
+5. Implement and test with edge cases`;
     }
     
     if (message.includes('time complexity') || message.includes('complexity')) {
-      return `Time complexity is crucial for algorithm design! 🔥
+      return `Time complexity basics. 🔥
 
-Common time complexities:
-- O(1): Constant time
-- O(log n): Logarithmic time
-- O(n): Linear time
-- O(n log n): Linearithmic time
-- O(n²): Quadratic time
-- O(2ⁿ): Exponential time
-
-For this specific problem, I'll be able to analyze the optimal time complexity once you configure the API key!`;
+Common complexities:
+- O(1): constant
+- O(log n): logarithmic
+- O(n): linear
+- O(n log n): linearithmic
+- O(n^2): quadratic
+- O(2^n): exponential`;
     }
     
     // Default response
-    return `I'm here to help with your coding questions! 🔥
+    return `I'm here to help with your coding questions. 🔥
 
-To get full AI assistance with this problem, you'll need to:
+To enable full AI assistance for this problem:
 1. Get a Gemini API key from Google AI Studio
-2. Add it to your .env file as REACT_APP_GEMINI_API_KEY
+2. Add it to your .env file as VITE_GEMINI_API_KEY
 3. Restart your development server
 
-For now, I can provide general coding tips and help you understand the problem structure. What specific aspect would you like to discuss?`;
+Meanwhile, I can give general guidance. Tell me what part you're stuck on (approach, debugging, edge cases, or optimization).`;
   }
 
   // Test API connection

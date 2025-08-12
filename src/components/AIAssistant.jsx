@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './AIAssistant.css';
 import geminiService from '../services/geminiService';
+import api from '../api/axios';
 
 const AIAssistant = () => {
   const { problemId } = useParams();
@@ -18,6 +19,8 @@ const AIAssistant = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState('checking'); // 'checking', 'connected', 'error'
+  // Track live code and language from ProblemPage via window events
+  const [userCodeContext, setUserCodeContext] = useState({ code: '', language: 'Python' });
   const messagesEndRef = useRef(null);
 
   // Fetch problem context and check API status when component mounts
@@ -50,17 +53,24 @@ const AIAssistant = () => {
     if (problemId) {
       const fetchProblemContext = async () => {
         try {
-          const response = await fetch(`/api/accounts/problem/${problemId}/`);
-          if (response.ok) {
-            const problemData = await response.json();
-            setProblemContext(problemData);
-          }
+          const { data } = await api.get(`/api/accounts/problem/${problemId}/`);
+          setProblemContext(data);
         } catch (error) {
           console.error('Failed to fetch problem context:', error);
         }
       };
       fetchProblemContext();
     }
+    // Listen for code updates broadcasted from ProblemPage
+    const handleCodeUpdate = (e) => {
+      const { code, language } = e.detail || {};
+      setUserCodeContext({ code: code || '', language: language || 'Python' });
+    };
+    window.addEventListener('oj-code-update', handleCodeUpdate);
+
+    return () => {
+      window.removeEventListener('oj-code-update', handleCodeUpdate);
+    };
   }, [problemId]);
 
   const scrollToBottom = () => {
@@ -88,8 +98,21 @@ const AIAssistant = () => {
     // Get conversation history (excluding the welcome message)
     const conversationHistory = messages.filter(msg => msg.id !== 1);
     
-    // Call Gemini API with problem context (includes placeholder responses)
-    const aiResponseText = await geminiService.generateResponse(inputMessage, conversationHistory, problemContext);
+    // Refresh problem context if missing (e.g., initial load race)
+    if (!problemContext && problemId) {
+      try {
+        const { data } = await api.get(`/api/accounts/problem/${problemId}/`);
+        setProblemContext(data);
+      } catch {}
+    }
+
+    // Call Gemini API with problem context and live code
+    const aiResponseText = await geminiService.generateResponse(
+      inputMessage,
+      conversationHistory,
+      problemContext,
+      userCodeContext
+    );
     
     const aiResponse = {
       id: Date.now() + 1,
