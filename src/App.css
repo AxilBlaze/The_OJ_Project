@@ -338,4 +338,18 @@ section, aside {
   .site-header button {
     padding: 0.45rem 0.9rem;
   }
+  .main-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  main {
+    padding: 1rem 0.75rem;
+  }
+  .hero-banner .hero-actions .hero-btn {
+    padding: 0.6rem 1.1rem;
+    font-size: 0.95rem;
+  }
+  .hero-stats .hero-stat {
+    font-size: 0.95rem;
+  }
 }
