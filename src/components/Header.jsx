@@ -8,11 +8,7 @@ const Header = () => {
   const { isAuthenticated, logout } = useAuth();
 
   return (
-    <header style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '1rem 2rem', background: 'var(--card-bg)', borderBottom: '1px solid var(--border)',
-      position: 'sticky', top: 0, zIndex: 100
-    }}>
+    <header className="site-header">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
         <div className="logo-container">
           <div className="glow-background"></div>
@@ -38,7 +34,7 @@ const Header = () => {
           </div>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className="header-actions">
         <button onClick={toggleTheme} style={{ fontSize: '1.3rem', padding: '0.3rem 0.7rem', borderRadius: '50%', background: 'var(--bg)', border: '1px solid var(--border)', transition: 'background 0.2s' }}>
           {theme === "dark" ? "🌙" : "☀️"}
         </button>

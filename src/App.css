@@ -118,6 +118,25 @@ section, aside {
   margin-left: 4rem;
 }
 
+/* Responsive header */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .logo-text {
   font-size: 2.5rem;
   font-weight: bold;
@@ -299,5 +318,24 @@ section, aside {
   .glow-background {
       width: 250px;
       height: 80px;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .site-header .logo-container {
+    margin-left: 0;
+  }
+  .site-header button {
+    padding: 0.45rem 0.9rem;
   }
 }
