@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import CodeEditor from "./CodeEditor";
 import api from "../api/axios";
 
 const snippets = {
@@ -58,12 +59,11 @@ export default function CodeSnippetRenderer() {
         </select>
         <button onClick={() => {navigator.clipboard.writeText(code)}} style={{ marginLeft: 8, padding: '0.4rem 1rem', borderRadius: 6, background: langColors[lang], color: '#fff', fontWeight: 600, border: 'none' }}>Copy</button>
       </div>
-      <textarea
+      <CodeEditor
         value={code}
-        onChange={e => setCode(e.target.value)}
-        rows={10}
-        placeholder={`Write ${lang} code here...`}
-        style={{ width: '100%', minHeight: 220, borderRadius: 8, border: '1px solid var(--border)', background: '#0f172a', color: '#e5e7eb', padding: '1rem', fontFamily: 'monospace', fontSize: '1rem', marginBottom: 10 }}
+        onChange={setCode}
+        language={{ 'Python': 'python', 'C++': 'cpp', 'Java': 'java' }[lang]}
+        height="50vh"
       />
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 8, borderBottom: '1px solid var(--border)', margin: '8px 0 12px' }}>

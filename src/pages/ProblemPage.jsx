@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import StarryBackground from "../components/StarryBackground";
 import CelebrationAnimation from "../components/CelebrationAnimation";
 import AIAssistant from "../components/AIAssistant";
+import CodeEditor from "../components/CodeEditor";
 
 export default function ProblemPage() {
   const { problemId } = useParams();
@@ -286,16 +287,14 @@ public class Main {
               </select>
             </div>
             
-            <textarea
+            <CodeEditor
               value={code}
-              onChange={e => {
-                const updated = e.target.value;
-                setCode(updated);
-                window.dispatchEvent(new CustomEvent('oj-code-update', { detail: { code: updated, language } }));
+              onChange={(v) => {
+                setCode(v);
+                window.dispatchEvent(new CustomEvent('oj-code-update', { detail: { code: v, language } }));
               }}
-              rows={12}
-              placeholder="Write your code here..."
-              style={{ width: '100%', borderRadius: 8, border: '1px solid #444', background: '#18181b', color: '#f1f5f9', padding: '1rem', fontFamily: 'monospace', fontSize: '1rem', resize: 'vertical', minHeight: 240, marginBottom: 12 }}
+              language={{ 'Python': 'python', 'C++': 'cpp', 'Java': 'java' }[language]}
+              height="55vh"
             />
             
             {/* Tab Navigation */}
