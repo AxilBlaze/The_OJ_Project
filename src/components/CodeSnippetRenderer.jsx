@@ -3,7 +3,19 @@ import CodeEditor from "./CodeEditor";
 import api from "../api/axios";
 
 const snippets = {
-  'C++': `int main() {\n  cout << "Hello, World!" << endl;\n  return 0;\n}`,
+  'C++': `#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  // Your code here
+  cout << "Hello, World!" << '\n';
+  return 0;
+}`,
   'Java': `public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}`,
   'Python': `print("Hello, World!")`,
 };
