@@ -13,7 +13,7 @@ int main() {
   cin.tie(nullptr);
 
   // Your code here
-  cout << "Hello, World!" << '\n';
+  cout << "Hello, World!" << endl;
   return 0;
 }`,
   'Java': `public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, World!");\n  }\n}`,
