@@ -16,6 +16,7 @@ import SearchBar from './components/SearchBar';
 import CodeSnippetRenderer from './components/CodeSnippetRenderer';
 import Footer from './components/Footer';
 import ProblemPage from './pages/ProblemPage';
+import ProblemsPage from './pages/ProblemsPage';
 import './App.css';
 
 function RequireAuth() {
@@ -37,6 +38,7 @@ function App() {
           <Route path="/signin" element={<SignInPage />} />
           <Route element={<RequireAuth />}>
             <Route path="/home" element={<HomePage />} />
+            <Route path="/problems" element={<ProblemsPage />} />
             <Route path="/problem/:problemId" element={<ProblemPage />} />
           </Route>
         </Routes>
