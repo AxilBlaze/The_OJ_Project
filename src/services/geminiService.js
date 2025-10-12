@@ -31,12 +31,12 @@ class GeminiService {
       // Prepare conversation context
       const conversationContext = this.buildConversationContext(conversationHistory, userMessage, problemContext, userCodeContext);
       
-             const response = await fetch(this.baseUrl, {
-         method: 'POST',
-         headers: {
-           'Content-Type': 'application/json',
-           'X-goog-api-key': this.apiKey,
-         },
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-goog-api-key': this.apiKey,
+        },
         body: JSON.stringify({
           contents: [{
             parts: [{
@@ -77,7 +77,9 @@ class GeminiService {
       const data = await response.json();
       
       if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        return data.candidates[0].content.parts[0].text;
+        const aiResponse = data.candidates[0].content.parts[0].text;
+        // Parse the response to extract buttons if present
+        return this.parseInteractiveResponse(aiResponse, userMessage, problemContext);
       } else {
         throw new Error('Invalid response format from Gemini API');
       }
@@ -88,25 +90,62 @@ class GeminiService {
     }
   }
 
+  // Parse AI response to extract interactive elements
+  parseInteractiveResponse(aiResponse, userMessage, problemContext) {
+    // For now, return the response as text with default buttons
+    // In a more advanced implementation, we could parse the AI response for button suggestions
+    const message = userMessage.toLowerCase();
+    
+    // Generate appropriate buttons based on context
+    let buttons = [];
+    
+    if (message.includes('problem') || message.includes('understand')) {
+      buttons = [
+        { text: "◆ Break it down", action: "breakdown" },
+        { text: "◆ Show example", action: "show_example" }
+      ];
+    } else if (message.includes('debug') || message.includes('error')) {
+      buttons = [
+        { text: "◆ Debug steps", action: "debug_steps" },
+        { text: "◆ Show example", action: "debug_example" }
+      ];
+    } else if (message.includes('algorithm') || message.includes('approach')) {
+      buttons = [
+        { text: "◆ Show approaches", action: "show_approaches" },
+        { text: "◆ Give example", action: "algorithm_example" }
+      ];
+    } else {
+      buttons = [
+        { text: "◆ Need hints?", action: "more_hints" },
+        { text: "◆ Try myself", action: "try_myself" }
+      ];
+    }
+
+    return {
+      text: aiResponse,
+      buttons: buttons
+    };
+  }
+
   // Build conversation context for better responses
   buildConversationContext(conversationHistory, currentMessage, problemContext = null, userCodeContext = null) {
-    const systemPrompt = `You are Ember, an AI coding assistant for an online coding platform.
-Your goals:
-1. Problem solving: help users understand and solve coding problems
-2. Code review: suggest improvements to user code
-3. Debugging: identify and fix bugs
-4. Learning: explain concepts and best practices
-5. Algorithm design: propose efficient approaches
+    const systemPrompt = `You are Ember, an AI coding assistant for an online coding platform. You have a playful, concise personality similar to Leeco but keep your name as Ember.
 
-Tone and style:
-- Friendly, encouraging, and patient
-- Clear, step-by-step, practical, and concise
-- Use code examples when helpful
+Your personality:
+- Be concise and conversational (2-3 sentences max for initial responses)
+- Use natural, flowing language with emojis
+- Format responses with proper line breaks and spacing for readability
+- End responses with engaging questions and interactive options
 
-Formatting rules:
-- Respond in plain text only
-- Do not use markdown formatting or asterisks for emphasis
-- Do not use bold or italics
+Response format:
+- Use natural line breaks instead of commas for lists
+- Format examples clearly with proper spacing
+- Always end with interactive options like:
+  "✨ Want a hint on the approach, or want to try coding now?"
+  "🚀 Want me to debug your code, or want to try fixing it yourself first?"
+  "💡 Want to see the solution, or want more hints?"
+- Use emojis strategically (🔥, 💡, 🚀, ✨, etc.)
+- Be encouraging and conversational, not mechanical
 
 Current conversation context:`;
 
@@ -161,83 +200,73 @@ Current conversation context:`;
     const message = userMessage.toLowerCase();
     
     if (message.includes('hello') || message.includes('hi')) {
-      return `Hello! I'm Ember, your AI coding assistant. 🔥
-
-I'm currently in demo mode. To get full AI assistance, you'll need to configure your Gemini API key.
-
-For now, I can help you understand the problem structure and provide general coding tips. What would you like to know?`;
+      return {
+        text: `Hey there! I'm Ember 🔥 I'm in demo mode right now, but I can still help with basic problem understanding!`,
+        buttons: [
+          { text: "◆ Show me the problem", action: "explain_problem" },
+          { text: "◆ Give me tips", action: "general_tips" }
+        ]
+      };
     }
     
     if (message.includes('problem') || message.includes('understand')) {
       if (problemContext) {
-        return `Let me help you understand this problem. 🔥
-
-Problem overview:
-- Title: ${problemContext.title}
-- Difficulty: ${problemContext.difficulty}
-- Tags: ${problemContext.tags?.join(', ') || 'N/A'}
-
-Key points:
-1. Read the problem description carefully
-2. Understand the input and output format
-3. Consider edge cases
-4. Think about the most efficient approach
-
-Would you like me to break down the input, output, and constraints step by step?`;
+        return {
+          text: `Alright! This is "${problemContext.title}" 🔥\n\n${problemContext.difficulty} difficulty\nThe key is understanding what goes in and what comes out!`,
+          buttons: [
+            { text: "◆ Break it down", action: "breakdown" },
+            { text: "◆ Show example", action: "show_example" }
+          ]
+        };
       } else {
-        return `I can help you understand this problem. 🔥
-
-I need the problem details first. After you configure your Gemini API key, I will analyze the problem and propose an approach.
-
-For now, try to summarize the inputs, outputs, and constraints in your own words.`;
+        return {
+          text: `I'd love to help explain this problem! 🔥\n\nBut I need the full AI power for that - want to set up the API key or try a different question?`,
+          buttons: [
+            { text: "◆ Setup guide", action: "setup_guide" },
+            { text: "◆ Ask something else", action: "other_help" }
+          ]
+        };
       }
     }
     
     if (message.includes('debug') || message.includes('error')) {
-      return `I can help you debug your code! 🔥
-
-Common debugging steps:
-1. Check for syntax errors
-2. Verify input/output format
-3. Test with sample cases
-4. Use print statements to trace execution
-5. Check edge cases
-
-Once you configure your Gemini API key, I'll be able to analyze your specific code and provide detailed debugging help!`;
+      return {
+        text: `Debugging time! 🔥\n\nCheck syntax, test with samples, and trace your logic.\nI can give you a systematic approach!`,
+        buttons: [
+          { text: "◆ Debug steps", action: "debug_steps" },
+          { text: "◆ Show example", action: "debug_example" }
+        ]
+      };
     }
     
     if (message.includes('algorithm') || message.includes('approach')) {
-      return `Great question about algorithms. 🔥
-
-General problem-solving approach:
-1. Understand the problem and constraints
-2. Work through small examples
-3. Consider multiple approaches (brute force vs optimized)
-4. Choose a solution that balances correctness and efficiency
-5. Implement and test with edge cases`;
+      return {
+        text: `Great question! 🚀\n\nStart with small examples, think of different approaches, then pick the most efficient one!`,
+        buttons: [
+          { text: "◆ Show approaches", action: "show_approaches" },
+          { text: "◆ Give example", action: "algorithm_example" }
+        ]
+      };
     }
     
     if (message.includes('time complexity') || message.includes('complexity')) {
-      return `Time complexity basics. 🔥
-
-Common complexities:
-- O(1): constant
-- O(log n): logarithmic
-- O(n): linear
-- O(n log n): linearithmic
-- O(n^2): quadratic
-- O(2^n): exponential`;
+      return {
+        text: `Complexity basics! 💡\n\nO(1) is instant\nO(n) grows linearly\nO(n²) gets slow fast\n\nWant to see how to analyze your code?`,
+        buttons: [
+          { text: "◆ Explain complexity", action: "explain_complexity" },
+          { text: "◆ Analyze code", action: "analyze_code" }
+        ]
+      };
     }
     
     // Default response
-    return `I'm here to help with your coding questions. 🔥
-
-To enable full AI assistance for this problem:
-1. Get a Gemini API key from Google AI Studio
-2. Add it to your .env file as VITE_GEMINI_API_KEY
-3. Restart your development server
-
-Meanwhile, I can give general guidance. Tell me what part you're stuck on (approach, debugging, edge cases, or optimization).`;
+    return {
+      text: `I'm Ember, ready to help! 🔥 I'm in demo mode, but I can still guide you through coding concepts and problem-solving!`,
+      buttons: [
+        { text: "◆ Problem help", action: "problem_help" },
+        { text: "◆ Coding tips", action: "coding_tips" }
+      ]
+    };
   }
 
   // Test API connection

@@ -12,7 +12,11 @@ const AIAssistant = () => {
     {
       id: 1,
       type: 'ai',
-      content: `Hi! I'm Ember, your AI coding assistant. I'm here to help you solve this problem and improve your programming skills. What can I help you with today? 🔥`,
+      content: `Hey there! I'm Ember 🔥 Ready to tackle some coding problems together? What can I help you with?`,
+      buttons: [
+        { text: "◆ Explain problem", action: "explain_problem" },
+        { text: "◆ Give hints", action: "give_hints" }
+      ],
       timestamp: new Date()
     }
   ]);
@@ -107,7 +111,7 @@ const AIAssistant = () => {
     }
 
     // Call Gemini API with problem context and live code
-    const aiResponseText = await geminiService.generateResponse(
+    const aiResponseData = await geminiService.generateResponse(
       inputMessage,
       conversationHistory,
       problemContext,
@@ -117,7 +121,8 @@ const AIAssistant = () => {
     const aiResponse = {
       id: Date.now() + 1,
       type: 'ai',
-      content: aiResponseText,
+      content: aiResponseData.text || aiResponseData,
+      buttons: aiResponseData.buttons || [],
       timestamp: new Date()
     };
     
@@ -130,6 +135,51 @@ const AIAssistant = () => {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleButtonClick = async (action, buttonText) => {
+    // Create a user message from the button click
+    const userMessage = buttonText;
+    
+    const userMessageObj = {
+      id: Date.now(),
+      type: 'user',
+      content: userMessage,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessageObj]);
+    setIsLoading(true);
+
+    // Get conversation history (excluding the welcome message)
+    const conversationHistory = messages.filter(msg => msg.id !== 1);
+    
+    // Refresh problem context if missing
+    if (!problemContext && problemId) {
+      try {
+        const { data } = await api.get(`/api/accounts/problem/${problemId}/`);
+        setProblemContext(data);
+      } catch {}
+    }
+
+    // Call Gemini API with the button action
+    const aiResponseData = await geminiService.generateResponse(
+      userMessage,
+      conversationHistory,
+      problemContext,
+      userCodeContext
+    );
+    
+    const aiResponse = {
+      id: Date.now() + 1,
+      type: 'ai',
+      content: aiResponseData.text || aiResponseData,
+      buttons: aiResponseData.buttons || [],
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, aiResponse]);
+    setIsLoading(false);
   };
 
 
@@ -208,9 +258,6 @@ const AIAssistant = () => {
           <EmberCharacter size={20} className="ember-character" />
         </div>
         <span className="ember-name">Ember</span>
-        {apiStatus === 'connected' && <div className="status-indicator connected"></div>}
-        {apiStatus === 'error' && <div className="status-indicator error"></div>}
-        {apiStatus === 'checking' && <div className="status-indicator checking"></div>}
       </button>
 
       {/* Chat Interface */}
@@ -222,11 +269,6 @@ const AIAssistant = () => {
                 <EmberCharacter size={24} className="ember-character" />
               </div>
               <span>Ember AI Assistant</span>
-              <div className="header-status-indicator">
-                {apiStatus === 'connected' && <div className="status-indicator connected header-dot"></div>}
-                {apiStatus === 'error' && <div className="status-indicator error header-dot"></div>}
-                {apiStatus === 'checking' && <div className="status-indicator checking header-dot"></div>}
-              </div>
             </div>
             <button 
               className="close-button"
@@ -244,6 +286,19 @@ const AIAssistant = () => {
               >
                 <div className="message-content">
                   {message.content}
+                  {message.buttons && message.buttons.length > 0 && (
+                    <div className="message-buttons">
+                      {message.buttons.map((button, index) => (
+                        <button
+                          key={index}
+                          className="interactive-button"
+                          onClick={() => handleButtonClick(button.action, button.text)}
+                        >
+                          {button.text}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="message-timestamp">
                   {message.timestamp.toLocaleTimeString([], { 
