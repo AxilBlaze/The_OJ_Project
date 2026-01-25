@@ -1,22 +1,33 @@
 // Gemini API Service for Ember AI Assistant
 // Get API key from environment variables (Vite uses import.meta.env)
-let GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDQp0dJ1gua0P-ePdldCP61v7M3WDi-6ZQ';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+import { GoogleGenAI } from "@google/genai";
+
+let GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_MODEL = 'gemini-3-flash-preview';
 
 class GeminiService {
   constructor() {
     this.apiKey = GEMINI_API_KEY;
-    this.baseUrl = GEMINI_API_URL;
+    this.client = null;
+    if (this.apiKey) {
+      this.initialize(this.apiKey);
+    }
   }
 
   // Initialize the service with API key
   initialize(apiKey) {
     this.apiKey = apiKey;
+    try {
+      this.client = new GoogleGenAI({ apiKey: this.apiKey });
+    } catch (error) {
+      console.error("Failed to initialize Gemini client:", error);
+    }
   }
 
   // Set API key manually (useful if environment variables don't work)
   setApiKey(apiKey) {
     this.apiKey = apiKey;
+    this.initialize(apiKey);
     console.log('API key set successfully');
   }
 
@@ -27,65 +38,53 @@ class GeminiService {
       return this.getPlaceholderResponse(userMessage, problemContext);
     }
 
+    if (!this.client) {
+      this.initialize(this.apiKey);
+    }
+
     try {
       // Prepare conversation context
       const conversationContext = this.buildConversationContext(conversationHistory, userMessage, problemContext, userCodeContext);
-      
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': this.apiKey,
+
+      const response = await this.client.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: conversationContext,
+        config: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: conversationContext
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
           },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            }
-          ]
-        })
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
       });
 
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        const aiResponse = data.candidates[0].content.parts[0].text;
+      if (response && response.text) {
         // Parse the response to extract buttons if present
-        return this.parseInteractiveResponse(aiResponse, userMessage, problemContext);
+        return this.parseInteractiveResponse(response.text, userMessage, problemContext);
       } else {
-        throw new Error('Invalid response format from Gemini API');
+        throw new Error('Invalid response format from Gemini SDK');
       }
 
     } catch (error) {
       console.error('Gemini API Error:', error);
+      // Fallback for 403 or 429 errors if needed, or just rethrow
       throw error;
     }
   }
@@ -95,10 +94,10 @@ class GeminiService {
     // For now, return the response as text with default buttons
     // In a more advanced implementation, we could parse the AI response for button suggestions
     const message = userMessage.toLowerCase();
-    
+
     // Generate appropriate buttons based on context
     let buttons = [];
-    
+
     if (message.includes('problem') || message.includes('understand')) {
       buttons = [
         { text: "◆ Break it down", action: "breakdown" },
@@ -145,21 +144,20 @@ Response format:
   "🚀 Want me to debug your code, or want to try fixing it yourself first?"
   "💡 Want to see the solution, or want more hints?"
 - Use emojis strategically (🔥, 💡, 🚀, ✨, etc.)
-- Be encouraging and conversational, not mechanical
+- Be encouraging and conversational, not mechanical`;
 
-Current conversation context:`;
+    let contents = [{ role: "user", parts: [{ text: systemPrompt }] }];
 
-    let context = systemPrompt + '\n\n';
-    
     // Add problem context if available
     if (problemContext) {
-      context += `Current Problem Context:\n`;
-      context += `Title: ${problemContext.title}\n`;
-      context += `Difficulty: ${problemContext.difficulty || 'N/A'}\n`;
-      context += `Description: ${problemContext.description}\n`;
-      context += `Sample Input: ${problemContext.sample_input}\n`;
-      context += `Sample Output: ${problemContext.sample_output}\n`;
-      context += `Tags: ${problemContext.tags?.join(', ') || 'N/A'}\n\n`;
+      let problemText = `Current Problem Context:\n`;
+      problemText += `Title: ${problemContext.title}\n`;
+      problemText += `Difficulty: ${problemContext.difficulty || 'N/A'}\n`;
+      problemText += `Description: ${problemContext.description}\n`;
+      problemText += `Sample Input: ${problemContext.sample_input}\n`;
+      problemText += `Sample Output: ${problemContext.sample_output}\n`;
+      problemText += `Tags: ${problemContext.tags?.join(', ') || 'N/A'}\n`;
+      contents.push({ role: "user", parts: [{ text: problemText }] });
     }
 
     // Add user code context if available
@@ -170,24 +168,23 @@ Current conversation context:`;
       const codeSnippet = userCodeContext.code.length > maxChars
         ? userCodeContext.code.slice(0, maxChars) + "\n// ... code truncated ..."
         : userCodeContext.code;
-      context += `User's Current Code (${language}):\n`;
-      context += codeSnippet + "\n\n";
+      contents.push({ role: "user", parts: [{ text: `User's Current Code (${language}):\n${codeSnippet}` }] });
     }
-    
+
     // Add conversation history
     if (conversationHistory.length > 0) {
-      context += 'Previous conversation:\n';
-      conversationHistory.forEach((msg, index) => {
-        const role = msg.type === 'user' ? 'User' : 'Ember';
-        context += `${role}: ${msg.content}\n`;
+      conversationHistory.forEach((msg) => {
+        const role = msg.type === 'user' ? 'user' : 'model';
+        contents.push({ role: role, parts: [{ text: msg.content }] });
       });
-      context += '\n';
     }
 
     // Add current message
-    context += `User: ${currentMessage}\n\nEmber:`;
+    contents.push({ role: "user", parts: [{ text: currentMessage }] });
+    // Prime the model to respond as Ember (Removed to avoid API errors, system prompt handles this)
+    // contents.push({ role: "model", parts: [{ text: "Ember:" }] });
 
-    return context;
+    return contents;
   }
 
   // Validate API key format
@@ -198,7 +195,7 @@ Current conversation context:`;
   // Get placeholder responses when API key is not configured
   getPlaceholderResponse(userMessage, problemContext) {
     const message = userMessage.toLowerCase();
-    
+
     if (message.includes('hello') || message.includes('hi')) {
       return {
         text: `Hey there! I'm Ember 🔥 I'm in demo mode right now, but I can still help with basic problem understanding!`,
@@ -208,7 +205,7 @@ Current conversation context:`;
         ]
       };
     }
-    
+
     if (message.includes('problem') || message.includes('understand')) {
       if (problemContext) {
         return {
@@ -228,7 +225,7 @@ Current conversation context:`;
         };
       }
     }
-    
+
     if (message.includes('debug') || message.includes('error')) {
       return {
         text: `Debugging time! 🔥\n\nCheck syntax, test with samples, and trace your logic.\nI can give you a systematic approach!`,
@@ -238,7 +235,7 @@ Current conversation context:`;
         ]
       };
     }
-    
+
     if (message.includes('algorithm') || message.includes('approach')) {
       return {
         text: `Great question! 🚀\n\nStart with small examples, think of different approaches, then pick the most efficient one!`,
@@ -248,7 +245,7 @@ Current conversation context:`;
         ]
       };
     }
-    
+
     if (message.includes('time complexity') || message.includes('complexity')) {
       return {
         text: `Complexity basics! 💡\n\nO(1) is instant\nO(n) grows linearly\nO(n²) gets slow fast\n\nWant to see how to analyze your code?`,
@@ -258,7 +255,7 @@ Current conversation context:`;
         ]
       };
     }
-    
+
     // Default response
     return {
       text: `I'm Ember, ready to help! 🔥 I'm in demo mode, but I can still guide you through coding concepts and problem-solving!`,
@@ -273,7 +270,7 @@ Current conversation context:`;
   async testConnection() {
     try {
       const response = await this.generateResponse('Hello, can you help me with coding?');
-      return response && response.length > 0;
+      return response && response.text.length > 0;
     } catch (error) {
       console.error('API connection test failed:', error);
       return false;
